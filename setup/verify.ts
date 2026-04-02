@@ -112,6 +112,9 @@ export async function run(_args: string[]): Promise<void> {
     'SLACK_BOT_TOKEN',
     'SLACK_APP_TOKEN',
     'DISCORD_BOT_TOKEN',
+    'MATRIX_HOMESERVER_URL',
+    'MATRIX_USER_ID',
+    'MATRIX_ACCESS_TOKEN',
   ]);
 
   const channelAuth: Record<string, string> = {};
@@ -134,6 +137,13 @@ export async function run(_args: string[]): Promise<void> {
   }
   if (process.env.DISCORD_BOT_TOKEN || envVars.DISCORD_BOT_TOKEN) {
     channelAuth.discord = 'configured';
+  }
+  if (
+    (process.env.MATRIX_HOMESERVER_URL || envVars.MATRIX_HOMESERVER_URL) &&
+    (process.env.MATRIX_USER_ID || envVars.MATRIX_USER_ID) &&
+    (process.env.MATRIX_ACCESS_TOKEN || envVars.MATRIX_ACCESS_TOKEN)
+  ) {
+    channelAuth.matrix = 'configured';
   }
 
   const configuredChannels = Object.keys(channelAuth);

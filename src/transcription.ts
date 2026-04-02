@@ -93,6 +93,11 @@ export async function transcribeAudioMessage(
   }
 }
 
+export async function transcribeBuffer(audioBuffer: Buffer): Promise<string> {
+  const transcript = await transcribeWithOpenAI(audioBuffer, DEFAULT_CONFIG);
+  return transcript ?? DEFAULT_CONFIG.fallbackMessage;
+}
+
 export function isVoiceMessage(msg: WAMessage): boolean {
   return msg.message?.audioMessage?.ptt === true;
 }
