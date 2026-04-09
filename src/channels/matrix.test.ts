@@ -392,6 +392,8 @@ describe('MatrixChannel', () => {
       beforeEach(() => {
         vi.stubGlobal('fetch', mockFetch);
         mockFetch.mockResolvedValue({
+          ok: true,
+          headers: { get: () => null },
           arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
         });
       });
@@ -472,6 +474,7 @@ describe('MatrixChannel', () => {
         );
         expect(transcribeBuffer as Mock).toHaveBeenCalledWith(
           expect.any(Buffer),
+          undefined,
         );
       });
     });
