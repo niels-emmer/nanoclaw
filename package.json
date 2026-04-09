@@ -29,7 +29,8 @@
     "googleapis": "^146.0.0",
     "matrix-js-sdk": "^41.3.0-rc.0",
     "openai": "^6.27.0",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "sharp": "^0.34.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
