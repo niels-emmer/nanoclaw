@@ -4,6 +4,7 @@
 // discord
 
 // gmail
+import './gmail.js';
 
 // matrix
 import './matrix.js';
