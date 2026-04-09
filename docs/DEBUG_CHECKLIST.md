@@ -39,6 +39,34 @@ grep -E "image found|image NOT found|image missing" logs/nanoclaw.log
 
 If you need Kubernetes enabled, set `CONTAINER_IMAGE` to an image stored in a registry that the kubelet won't GC, or raise the GC thresholds.
 
+### 5. Container image missing (Docker pruned or restarted)
+
+**Symptoms**: `Container exited with code 125: pull access denied for nanoclaw-agent` — agent shows "typing" but no reply arrives. Retry backoff kicks in (doubling delays: 10s, 20s, 40s, 80s…), then max retries are hit and messages are dropped until the next incoming message.
+
+**Cause**: The `nanoclaw-agent:latest` image was deleted. On Linux this can happen after a Docker daemon restart or manual `docker system prune`. On macOS with Kubernetes enabled, the kubelet's image GC deletes it (see issue #4 above).
+
+**Fix**:
+```bash
+./container/build.sh
+systemctl --user restart nanoclaw   # Linux
+# macOS: launchctl kickstart -k gui/$(id -u)/com.nanoclaw
+```
+
+**Note**: After max retries are exhausted, queued messages are not permanently lost — the cursor is rolled back. They will be retried on the next incoming message.
+
+### 6. Voice transcription returns "Invalid file format" (MIME type mismatch)
+
+**Symptoms**: Matrix voice messages produce `[Voice Message - transcription failed]` in chat. Error log shows: `OpenAI transcription failed: BadRequestError: 400 Invalid file format`.
+
+**Cause**: Different clients send audio in different formats. Chrome-based Element Web sends `audio/webm;codecs=opus`, while Firefox sends `audio/ogg;codecs=opus`. Earlier code hardcoded `audio/ogg` as the filename/MIME type regardless of actual content, causing OpenAI Whisper to reject non-OGG files.
+
+**Fix** (already applied): `matrix.ts` now reads the HTTP `Content-Type` header from the audio download response, falling back to the Matrix event's `info.mimetype`. `transcription.ts` maps the MIME type to the correct file extension (`webm`, `ogg`, `wav`, etc.) before submitting to OpenAI.
+
+**Diagnosis**:
+```bash
+grep -i "transcri\|Invalid file format\|voice" logs/nanoclaw.error.log | tail -20
+```
+
 ## Quick Status Check
 
 ```bash
@@ -153,6 +181,24 @@ npm run auth
 
 ## Service Management
 
+**Linux (systemd)**:
+```bash
+# Restart the service
+systemctl --user restart nanoclaw
+
+# View live logs
+tail -f logs/nanoclaw.log
+# or: journalctl --user -u nanoclaw -f
+
+# Stop / start
+systemctl --user stop nanoclaw
+systemctl --user start nanoclaw
+
+# Rebuild after code changes
+npm run build && systemctl --user restart nanoclaw
+```
+
+**macOS (launchd)**:
 ```bash
 # Restart the service
 launchctl kickstart -k gui/$(id -u)/com.nanoclaw

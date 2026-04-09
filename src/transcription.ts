@@ -15,9 +15,28 @@ const DEFAULT_CONFIG: TranscriptionConfig = {
   fallbackMessage: '[Voice Message - transcription unavailable]',
 };
 
+function mimetypeToExtension(mimetype: string): string {
+  const base = mimetype.split(';')[0].trim().toLowerCase();
+  const map: Record<string, string> = {
+    'audio/webm': 'webm',
+    'audio/ogg': 'ogg',
+    'audio/oga': 'oga',
+    'audio/opus': 'ogg',
+    'audio/mp4': 'mp4',
+    'audio/m4a': 'm4a',
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
+    'audio/wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/flac': 'flac',
+  };
+  return map[base] ?? 'ogg';
+}
+
 async function transcribeWithOpenAI(
   audioBuffer: Buffer,
   config: TranscriptionConfig,
+  mimetype?: string,
 ): Promise<string | null> {
   const env = readEnvFile(['OPENAI_API_KEY']);
   const apiKey = env.OPENAI_API_KEY;
@@ -34,8 +53,9 @@ async function transcribeWithOpenAI(
 
     const openai = new OpenAI({ apiKey });
 
-    const file = await toFile(audioBuffer, 'voice.ogg', {
-      type: 'audio/ogg',
+    const ext = mimetypeToExtension(mimetype ?? 'audio/ogg');
+    const file = await toFile(audioBuffer, `voice.${ext}`, {
+      type: mimetype ?? 'audio/ogg',
     });
 
     const transcription = await openai.audio.transcriptions.create({
@@ -93,8 +113,8 @@ export async function transcribeAudioMessage(
   }
 }
 
-export async function transcribeBuffer(audioBuffer: Buffer): Promise<string> {
-  const transcript = await transcribeWithOpenAI(audioBuffer, DEFAULT_CONFIG);
+export async function transcribeBuffer(audioBuffer: Buffer, mimetype?: string): Promise<string> {
+  const transcript = await transcribeWithOpenAI(audioBuffer, DEFAULT_CONFIG, mimetype);
   return transcript ?? DEFAULT_CONFIG.fallbackMessage;
 }
 

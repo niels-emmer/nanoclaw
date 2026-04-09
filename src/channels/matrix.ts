@@ -171,6 +171,7 @@ class MatrixChannel implements Channel {
           msgtype?: string;
           body?: string;
           url?: string;
+          info?: { mimetype?: string };
         };
         if (
           content.msgtype !== MsgType.Text &&
@@ -198,6 +199,7 @@ class MatrixChannel implements Channel {
             senderName,
             timestamp,
             content.url,
+            content.info?.mimetype,
           );
           return;
         }
@@ -227,6 +229,7 @@ class MatrixChannel implements Channel {
     senderName: string,
     timestamp: string,
     mxcUrl: string | undefined,
+    mimetype?: string,
   ): Promise<void> {
     let content: string;
     const httpUrl = mxcUrl ? this.client.mxcUrlToHttp(mxcUrl) : null;
@@ -235,9 +238,15 @@ class MatrixChannel implements Channel {
     } else {
       try {
         const response = await fetch(httpUrl);
-        const buffer = Buffer.from(await response.arrayBuffer());
-        const transcript = await transcribeBuffer(buffer);
-        content = `[Voice: ${transcript}]`;
+        if (!response.ok) {
+          logger.error({ status: response.status, url: httpUrl }, 'Failed to download Matrix audio');
+          content = '[Voice Message - download failed]';
+        } else {
+          const buffer = Buffer.from(await response.arrayBuffer());
+          const detectedMime = response.headers.get('content-type') ?? mimetype;
+          const transcript = await transcribeBuffer(buffer, detectedMime ?? undefined);
+          content = `[Voice: ${transcript}]`;
+        }
       } catch (err) {
         logger.error({ err }, 'Matrix voice transcription error');
         content = '[Voice Message - transcription failed]';
