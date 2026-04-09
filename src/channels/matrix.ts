@@ -239,12 +239,18 @@ class MatrixChannel implements Channel {
       try {
         const response = await fetch(httpUrl);
         if (!response.ok) {
-          logger.error({ status: response.status, url: httpUrl }, 'Failed to download Matrix audio');
+          logger.error(
+            { status: response.status, url: httpUrl },
+            'Failed to download Matrix audio',
+          );
           content = '[Voice Message - download failed]';
         } else {
           const buffer = Buffer.from(await response.arrayBuffer());
           const detectedMime = response.headers.get('content-type') ?? mimetype;
-          const transcript = await transcribeBuffer(buffer, detectedMime ?? undefined);
+          const transcript = await transcribeBuffer(
+            buffer,
+            detectedMime ?? undefined,
+          );
           content = `[Voice: ${transcript}]`;
         }
       } catch (err) {

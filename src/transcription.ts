@@ -113,8 +113,15 @@ export async function transcribeAudioMessage(
   }
 }
 
-export async function transcribeBuffer(audioBuffer: Buffer, mimetype?: string): Promise<string> {
-  const transcript = await transcribeWithOpenAI(audioBuffer, DEFAULT_CONFIG, mimetype);
+export async function transcribeBuffer(
+  audioBuffer: Buffer,
+  mimetype?: string,
+): Promise<string> {
+  const transcript = await transcribeWithOpenAI(
+    audioBuffer,
+    DEFAULT_CONFIG,
+    mimetype,
+  );
   return transcript ?? DEFAULT_CONFIG.fallbackMessage;
 }
 
