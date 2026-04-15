@@ -170,7 +170,9 @@ function createSchema(database: Database.Database): void {
   }
 
   try {
-    database.exec('ALTER TABLE registered_groups ADD COLUMN is_main INTEGER DEFAULT 0');
+    database.exec(
+      'ALTER TABLE registered_groups ADD COLUMN is_main INTEGER DEFAULT 0',
+    );
   } catch {
     /* column already exists */
   }
